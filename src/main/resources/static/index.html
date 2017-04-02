@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style type="text/css">
+     
+	    
+div.container {
+height: 100%; margin: 0; padding: 0; 
+    width: 100%;
+    border: 1px solid gray;
+}
+
+header, footer {
+    padding: 1em;
+    color: white;
+    background-color: black;
+    clear: left;
+    text-align: center;
+}
+
+nav {
+    float: right;
+    max-width: 700px;
+    margin: 0;
+    padding: 1em;
+}
+
+article {
+    margin-left: 10px;
+	margin-right:250px;
+	height:450px;
+    padding: 1em;
+    overflow: solid;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<header>
+   <h1>Welcome to Local Transport</h1>
+</header>
+  
+<nav>
+<form action="http://localhost:8080/index" method="post">
+Name:  <input type="text" name="name" placeholder="Please enter your name"/>
+<br><br>
+Mobile No.:  <input type="text" name="mobile" placeholder="Please enter your contact number"/>
+<br><br>
+<input type="submit" value="Send OTP">
+<br><br>
+</form>
+<form action="" method="post">
+OTP:  <input type="text" name="otp" />
+<br><br>
+<input type="submit" value="Validate OTP">
+<br><br>
+<input type="text" id="latlng">		
+</form>
+
+</nav>
+
+<article id="map">
+   
+</article>
+<script>
+     var map;
+	 var location_pointed;
+	 var marker;
+	 ContextMenu.prototype = new google.maps.OverlayView();
+	 
+ContextMenu.prototype.onAdd = function() {
+
+    $("<div id='cMenu' class='context-menu-marker'></div>").appendTo(document.body);
+    var divOuter = $("#cMenu").get(0);
+
+    for(var i=0;i < this.menuItems.length;i++) {
+        var mItem = this.menuItems[i];
+        $('<div id="' + mItem.id + '" class="options-marker">' +
+          mItem.label + '</div>').appendTo(divOuter);
+    }
+
+    this.div_ = divOuter;
+
+    // Add the element to the "overlayLayer" pane.
+    var panes = this.getPanes();
+    //panes.overlayLayer.appendChild();
+    panes.overlayMouseTarget.appendChild(this.div_);
+
+    var me = this;
+
+    for(var i=0;i < this.menuItems.length;i++) {
+        var mItem = this.menuItems[i];
+
+        var func = function() {
+           me.clickedItem = this.id;
+           google.maps.event.trigger(me, 'click');
+        };
+
+        google.maps.event.addDomListener($("#" + mItem.id).get(0), 'click', $.proxy(func, mItem));
+    }
+
+
+    google.maps.event.addListener(me, 'click', function() {
+       alert(me.clickedItem); 
+    });
+
+};
+
+ContextMenu.prototype.draw = function() {
+    var div = this.div_;
+    div.style.left = '0px';
+    div.style.top = '0px';
+    div.style.width = '100px';
+    div.style.height = '50px';
+};
+
+ContextMenu.prototype.onRemove = function() {
+    this.div_.parentNode.removeChild(this.div_);
+    this.div_ = null;
+};
+
+ContextMenu.prototype.hide = function() {
+  if (this.div_) {
+    // The visibility property must be a string enclosed in quotes.
+    this.div_.style.visibility = 'hidden';
+  }
+};
+
+ContextMenu.prototype.show = function(cpx) {
+  if (this.div_) {
+    var div = this.div_;
+    div.style.left = cpx.x + 'px';
+    div.style.top = cpx.y + 'px';
+
+    this.div_.style.visibility = 'visible';
+  }
+};
+
+function ContextMenu(map,options) {
+    options = options || {}; //in case no options are passed to the constructor
+    this.setMap(map); //tells the overlay which map it needs to draw on
+    this.mapDiv = map.getDiv(); //Div container that the map exists in
+    this.menuItems = options.menuItems || {}; //specific to context menus
+    this.isVisible = false; //used to hide or show the context menu
+}
+ 
+	 function initMap(){
+	 location_pointed = {lat:24.442148824865637, lng:78.486328125};
+	 
+	 map = new google.maps.Map(document.getElementById('map'),{center:location_pointed, zoom:5});
+	 
+	 google.maps.event.addListener(map,'click',function(event) {
+	 
+        document.getElementById('latlng').value = event.latLng.lat() + ', ' + event.latLng.lng();
+		location_pointed = event.latLng;
+		if(marker!=null){
+		marker.setMap(null);
+		marker = null;
+		}
+		
+		marker = new google.maps.Marker({
+		  draggable: true,
+          position: location_pointed,
+          map: map
+		});  
+		
+    })
+
+    var options = {};
+    var menuItems=[];
+
+    menuItems.push({id:"zoomIn", className:'context_menu_item', eventName:'zoom_in_click', label:'Zoom in'});
+    menuItems.push({id:"zoomOut", className:'context_menu_item', eventName:'zoom_out_click', label:'Zoom out'});
+
+
+    options.menuItems = menuItems;
+    contextMenu = new ContextMenu(map, options);
+
+    google.maps.event.addListener(map, 'rightclick', function(mouseEvent){
+
+        contextMenu.hide();
+        this.clickedMarker_ = this;
+        var overlayProjection = contextMenu.getProjection();
+        var cpx = overlayProjection.fromLatLngToContainerPixel(mouseEvent.latLng);
+        contextMenu.show(cpx);
+
+        map.setOptions({ draggableCursor: 'pointer' });
+    });
+	
+	
+	}
+	 
+   </script>
+   <script async defer
+   src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCxmy3jFGo_aPX1nOkeJLNUIXe-mzoih6I&v=3&callback=initMap">
+   </script>
+
+<footer>Copyright &copy; Local Transport</footer>
+</div>
+
+</body>
+</html>
